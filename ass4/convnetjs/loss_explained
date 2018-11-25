@@ -1,0 +1,50 @@
+
+convnetjs/demo/js/image_regression.js line 47-55
+  var stats = trainer.train(v, r);
+  loss += stats.loss;
+  lossi += 1;
+}
+}
+loss /= lossi;
+-> loss is accumulated for each iteration, then averaged with number of iteration
+
+if(counter === 0) smooth_loss = loss;
+else smooth_loss = 0.99*smooth_loss + 0.01*loss;
+-> displayed loss is smooth loss, a decaying window for loss??
+
+convnetjs/src/convnet_trainers.js line 149
+loss: cost_loss + l1_decay_loss + l2_decay_loss
+
+
+convnetjs/src/convnet_trainers.js line 42-44
+var cost_loss = this.net.backward(y);
+var l2_decay_loss = 0.0;
+var l1_decay_loss = 0.0;
+
+convnetjs/src/convnet_trainers.js line 73-, 125
+for(var j=0;j<plen;j++) {
+l2_decay_loss += l2_decay*p[j]*p[j]/2;
+l1_decay_loss += l1_decay*Math.abs(p[j]);
+...}
+-> accumulate weight decay loss from updated params
+
+p[j] += - this.learning_rate * gij;
+-> update beta
+
+
+convnetjs/src/convnet_layers_loss.js line 117 
+var x = this.in_act;
+      x.dw = global.zeros(x.w.length); // zero out the gradient of input Vol
+      var loss = 0.0;
+      if(y instanceof Array || y instanceof Float64Array) {
+        for(var i=0;i<this.out_depth;i++) {
+          var dy = x.w[i] - y[i];
+          x.dw[i] = dy;
+          loss += 0.5*dy*dy;
+        }
+}
+-> cost loss is essentially sum of squared residual, y = gt, x = input activations to this regression layer
+
+
+
+
